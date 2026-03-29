@@ -1,23 +1,29 @@
 
 import streamlit as st
 import torch
+import os
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
 # Set Page Config
-st.set_page_config(page_title="Fake Review Detector", page_icon="🔍")
+st.set_page_config(page_title="Fake Review Detector", page_icon="ᄇ")
 
 # 1. Load the saved model and tokenizer
 @st.cache_resource
 def load_model():
-    model_path = 'fake_review_model'
+    # Since the files are in the root of the GitHub repo, we use '.'
+    model_path = '.' 
     tokenizer = AutoTokenizer.from_pretrained(model_path)
     model = AutoModelForSequenceClassification.from_pretrained(model_path)
     return tokenizer, model
 
-tokenizer, model = load_model()
+try:
+    tokenizer, model = load_model()
+except Exception as e:
+    st.error(f"Error loading model: {e}")
+    st.stop()
 
 # 2. App Interface
-st.title("🔍 Deceptive Hotel Review Detector")
+st.title("ᄇ Deceptive Hotel Review Detector")
 st.markdown("Enter a hotel review below to check if it's likely Real or Fake.")
 
 user_input = st.text_area("Review Text:", placeholder="Type or paste a review here...")
@@ -28,11 +34,11 @@ if st.button("Analyze Review"):
     else:
         # 3. Tokenization & Prediction
         inputs = tokenizer(user_input, return_tensors='pt', truncation=True, padding=True, max_length=256)
-        
+
         model.eval()
         with torch.no_grad():
             outputs = model(**inputs)
-        
+
         prediction = torch.argmax(outputs.logits, dim=-1).item()
 
         # 4. Display Result
